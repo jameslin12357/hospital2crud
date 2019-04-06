@@ -112,21 +112,21 @@
             <tbody>
             <% for(var i=0; i < results.recordsets[0].length; i++) { %>
                 <tr>
-                    <td><%= results[0][i].id %></td>
-                    <td><%= results[0][i].building_number %></td>
-                    <td><%= results[0][i].street %></td>
-                    <td><%= results[0][i].city %></td>
-                    <td><%= results[0][i].state %></td>
-                    <td><%= results[0][i].country %></td>
-                    <td><%= results[0][i].zip %></td>
-                    <td><%= results[0][i].date_created %></td>
-                    <td><%= results[0][i].date_edited %></td>
+                    <td><%= results.recordsets[0][i].id %></td>
+                    <td><%= results.recordsets[0][i].building_number %></td>
+                    <td><%= results.recordsets[0][i].street %></td>
+                    <td><%= results.recordsets[0][i].city %></td>
+                    <td><%= results.recordsets[0][i].state %></td>
+                    <td><%= results.recordsets[0][i].country %></td>
+                    <td><%= results.recordsets[0][i].zip %></td>
+                    <td><%= results.recordsets[0][i].date_created %></td>
+                    <td><%= results.recordsets[0][i].date_edited %></td>
                     <% if (req.user.level == 1) { %>
                         <td>
-                            <a href="/addresses/<%= results[0][i].id %>/edit" class="btn btn-outline-secondary">Edit</a>
+                            <a href="/addresses/<%= results.recordsets[0][i].id %>/edit" class="btn btn-outline-secondary">Edit</a>
                         </td>
                         <td>
-                            <form action="/addresses/<%= results[0][i].id %>?_method=DELETE" method="post">
+                            <form action="/addresses/<%= results.recordsets[0][i].id %>?_method=DELETE" method="post">
                                 <button type="submit" class="btn btn-outline-secondary">Delete</button>
                             </form>
                         </td>

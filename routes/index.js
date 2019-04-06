@@ -39,22 +39,22 @@ function isResource(req, res, next) {
     // let table = uri.substring(0, uri.length - 1);
     let table = uri;
     let id = Number(req.params.id);
-    let connection = mysql.createConnection({
-        host     : process.env.DB_HOSTNAME,
-        user     : process.env.DB_USERNAME,
-        password : process.env.DB_PASSWORD,
-        port     : process.env.DB_PORT,
-        database : process.env.DB_NAME,
-        multipleStatements: true
-    });
-    connection.query('SELECT id FROM ' + table + ' WHERE id = ?', [id], function(error, results, fields) {
+    // let connection = mysql.createConnection({
+    //     host     : process.env.DB_HOSTNAME,
+    //     user     : process.env.DB_USERNAME,
+    //     password : process.env.DB_PASSWORD,
+    //     port     : process.env.DB_PORT,
+    //     database : process.env.DB_NAME,
+    //     multipleStatements: true
+    // });
+    new sql.Request().query(`SELECT id FROM ${table} WHERE id = ${id}`, function(error, results) {
         // error will be an Error if one occurred during the query
         // results will contain the results of the query
         // fields will contain information about the returned results fields (if any)
         if (error) {
             throw error;
         }
-        if (results.length === 0){
+        if (results.rowsAffected[0] === 0){
             res.render('404');
         }
         else {
@@ -107,14 +107,12 @@ function isResource(req, res, next) {
 /* GET home page. */
 // if user is logged in return feed page else return home page
 router.get('/', function(req, res, next) {
-    // console.log(req.user);
   if (req.isAuthenticated()) {
       new sql.Request().query('SELECT * FROM addresses ORDER BY date_created DESC; SELECT count(*) as count FROM addresses',
           function (error, results) {
               if (error) {
                   throw error;
               }
-              // console.log(results.recordsets[1][0].count);
               res.render('addresses/index', {
                   title: 'Addresses',
                   req: req,
@@ -175,9 +173,8 @@ router.post('/users', isNotAuthenticated, [
             if (err) {
                 throw error;
             }
-            new sql.Request().query(`INSERT INTO users (email, username, password) VALUES (${email}, ${username}, CONVERT(binary(60), ${hash}))`,
+            new sql.Request().query(`INSERT INTO users (email, username, password) VALUES ('${email}', '${username}', '${hash}')`,
                 function (error, results) {
-                console.log(error);
                     // error will be an Error if one occurred during the query
                     // results will contain the results of the query
                     // fields will contain information about the returned results fields (if any)
@@ -192,9 +189,8 @@ router.post('/users', isNotAuthenticated, [
 });
 
 router.get('/users/:id', isResource, isAuthenticated, function(req, res){
-    connection.query('SELECT id, email, username, description, imageurl, datecreated, level FROM users WHERE id = ?',
-        [req.params.id],
-        function (error, results, fields) {
+    new sql.Request().query(`SELECT id, email, username, description, imageurl, date_created, level FROM users WHERE id = '${req.params.id}'`,
+        function (error, results) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -203,19 +199,19 @@ router.get('/users/:id', isResource, isAuthenticated, function(req, res){
             }
             console.log(results);
             res.render('users/show', {
-                                title: 'Profile',
-                                req: req,
-                                results: results,
-                                moment: moment,
-                                alert: req.flash('alert')
-                            });
+                title: 'Profile',
+                req: req,
+                results: results,
+                moment: moment,
+                alert: req.flash('alert')
+            });
         });
 });
 
 router.get('/users/:id/edit', isResource, isAuthenticated, function(req, res){
     if (req.user.id === Number(req.params.id)){
-        connection.query('SELECT id, email, username, description FROM users WHERE id = ?', [req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`SELECT id, email, username, description FROM users WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -263,8 +259,8 @@ router.put('/users/:id', isResource, isAuthenticated, function(req, res, next){
         const email = req.body.email;
         const username = req.body.username;
         const description = req.body.description;
-        connection.query('UPDATE users SET email = ?, username = ?, description = ? WHERE id = ?',
-            [email, username, description, req.params.id], function (error, results, fields) {
+        new sql.Request().query(`UPDATE users SET email = '${email}', username = '${username}', description = '${description}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -284,7 +280,7 @@ router.delete('/users/:id', isResource, isAuthenticated, function(req, res, next
         res.render('403');
     }
 }, function(req, res){
-    connection.query('DELETE FROM users WHERE id = ?', [req.params.id], function (error, results, fields) {
+    new sql.Request().query(`DELETE FROM users WHERE id = '${req.params.id}'`, function (error, results) {
         // error will be an Error if one occurred during the query
         // results will contain the results of the query
         // fields will contain information about the returned results fields (if any)
@@ -353,8 +349,8 @@ router.post('/addresses', isAuthenticated, function(req, res, next) {
             const state = req.body.state;
             const country = req.body.country;
             const zip = req.body.zip;
-            connection.query('INSERT INTO addresses (building_number, street, city, state, country, zip) VALUES ' +
-                '(?, ?, ?, ?, ?, ?)', [building_number, street, city, state, country, zip], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO addresses (building_number, street, city, state, country, zip) 
+            VALUES ('${building_number}', '${street}', '${city}', '${state}', '${country}', '${zip}')`, function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -370,8 +366,8 @@ router.post('/addresses', isAuthenticated, function(req, res, next) {
 
 router.get('/addresses/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, building_number, street, city, state, country, zip FROM addresses WHERE id = ?', [req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`SELECT id, building_number, street, city, state, country, zip FROM addresses WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -434,9 +430,8 @@ router.put('/addresses/:id', isResource, isAuthenticated, function(req, res, nex
         const state = req.body.state;
         const country = req.body.country;
         const zip = req.body.zip;
-        connection.query('UPDATE addresses SET building_number = ?, street = ?, city = ?, state = ?,' +
-            'country = ?, zip = ? WHERE id = ?',
-            [building_number, street, city, state, country, zip, req.params.id], function (error, results, fields) {
+        new sql.Request().query(`UPDATE addresses SET building_number = '${building_number}', street = '${street}', city = '${city}', state = '${state}', country = '${country}', zip = '${zip}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -451,7 +446,7 @@ router.put('/addresses/:id', isResource, isAuthenticated, function(req, res, nex
 
 router.delete('/addresses/:id', isResource, isAuthenticated, function(req, res, next) {
         if (req.user.level === 1){
-            connection.query('DELETE FROM addresses WHERE id = ?', [req.params.id], function (error, results, fields) {
+            new sql.Request().query(`DELETE FROM addresses WHERE id = '${req.params.id}'`, function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -469,8 +464,8 @@ router.delete('/addresses/:id', isResource, isAuthenticated, function(req, res, 
 // doctor routes
 router.get('/doctors', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM doctors ORDER BY date_created DESC; SELECT count(*) as count FROM doctors',
-            function (error, results, fields) {
+        new sql.Request().query('SELECT * FROM doctors ORDER BY date_created DESC; SELECT count(*) as count FROM doctors',
+            function (error, results) {
                 if (error) {
                     throw error;
                 }
@@ -545,8 +540,8 @@ router.post('/doctors', isAuthenticated, function(req, res, next) {
             const phone_number = req.body.phone_number;
             const gender_id = req.body.gender_id;
             const address_id = req.body.address_id;
-            connection.query('INSERT INTO doctors (first_name, last_name, age, dob, email, phone_number, gender_id, address_id) VALUES ' +
-                '(?, ?, ?, ?, ?, ?, ?, ?)', [first_name, last_name, age, dob, email, phone_number, gender_id, address_id], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO doctors (first_name, last_name, age, dob, email, phone_number, gender_id, address_id) VALUES ('${first_name}','${last_name}','${age}','${dob}','${email}','${phone_number}','${gender_id}','${address_id}')`,
+                function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -562,8 +557,8 @@ router.post('/doctors', isAuthenticated, function(req, res, next) {
 
 router.get('/doctors/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, first_name, last_name, age, dob, email, phone_number, gender_id, address_id FROM doctors WHERE id = ?', [req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`SELECT id, first_name, last_name, age, dob, email, phone_number, gender_id, address_id FROM doctors WHERE id = ${req.params.id}`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -630,10 +625,9 @@ router.put('/doctors/:id', isResource, isAuthenticated, function(req, res, next)
         const phone_number = req.body.phone_number;
         const gender_id = req.body.gender_id;
         const address_id = req.body.address_id;
-        connection.query('UPDATE doctors SET first_name = ?, last_name = ?, age = ?, dob = ?,' +
-            'email = ?, phone_number = ?, gender_id = ?, address_id = ? WHERE id = ?',
-            [first_name, last_name, age, dob, email, phone_number, gender_id, address_id, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE doctors SET first_name = '${first_name}', last_name = '${last_name}', age = '${age}', dob = '${dob}',
+            email = '${email}', phone_number = '${phone_number}', gender_id = '${gender_id}', address_id = '${address_id}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -648,7 +642,7 @@ router.put('/doctors/:id', isResource, isAuthenticated, function(req, res, next)
 
 router.delete('/doctors/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM doctors WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM doctors WHERE id = '${req.params.id}'`, function (error, results) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -666,7 +660,7 @@ router.delete('/doctors/:id', isResource, isAuthenticated, function(req, res, ne
 // gender routes
 router.get('/genders', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM genders ORDER BY date_created DESC; SELECT count(*) as count FROM genders',
+        new sql.Request().query('SELECT * FROM genders ORDER BY date_created DESC; SELECT count(*) as count FROM genders',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -716,8 +710,8 @@ router.post('/genders', isAuthenticated, function(req, res, next) {
         else {
             sanitizeBody('gender').trim().escape();
             const gender = req.body.gender;
-            connection.query('INSERT INTO genders (gender) VALUES ' +
-                '(?)', [gender], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO genders (gender) VALUES ('${gender}')`,
+                function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -733,7 +727,7 @@ router.post('/genders', isAuthenticated, function(req, res, next) {
 
 router.get('/genders/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, gender FROM genders WHERE id = ?', [req.params.id],
+        new sql.Request().query(`SELECT id, gender FROM genders WHERE id = '${req.params.id}'`,
             function (error, results, fields) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
@@ -774,9 +768,8 @@ router.put('/genders/:id', isResource, isAuthenticated, function(req, res, next)
     else {
         sanitizeBody('gender').trim().escape();
         const gender = req.body.gender;
-        connection.query('UPDATE genders SET gender = ? WHERE id = ?',
-            [gender, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE genders SET gender = '${gender}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -791,7 +784,7 @@ router.put('/genders/:id', isResource, isAuthenticated, function(req, res, next)
 
 router.delete('/genders/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM genders WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM genders WHERE id = '${req.params.id}'`, function (error, results) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -809,7 +802,7 @@ router.delete('/genders/:id', isResource, isAuthenticated, function(req, res, ne
 // insurance routes
 router.get('/insurances', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM insurances ORDER BY date_created DESC; SELECT count(*) as count FROM insurances',
+        new sql.Request().query('SELECT * FROM insurances ORDER BY date_created DESC; SELECT count(*) as count FROM insurances',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -863,8 +856,8 @@ router.post('/insurances', isAuthenticated, function(req, res, next) {
             sanitizeBody('description').trim().escape();
             const name = req.body.name;
             const description = req.body.description;
-            connection.query('INSERT INTO insurances (name, description) VALUES ' +
-                '(?, ?)', [name, description], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO insurances (name, description) VALUES ('${name}','${description}')`,
+                function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -880,8 +873,8 @@ router.post('/insurances', isAuthenticated, function(req, res, next) {
 
 router.get('/insurances/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, name, description FROM insurances WHERE id = ?', [req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`SELECT id, name, description FROM insurances WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -925,9 +918,8 @@ router.put('/insurances/:id', isResource, isAuthenticated, function(req, res, ne
         sanitizeBody('description').trim().escape();
         const name = req.body.name;
         const description = req.body.description;
-        connection.query('UPDATE insurances SET name = ?, description = ? WHERE id = ?',
-            [name, description, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE insurances SET name = '${name}', description = '${description}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -942,7 +934,7 @@ router.put('/insurances/:id', isResource, isAuthenticated, function(req, res, ne
 
 router.delete('/insurances/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM insurances WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM insurances WHERE id = '${req.params.id}'`, function (error, results) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -960,7 +952,7 @@ router.delete('/insurances/:id', isResource, isAuthenticated, function(req, res,
 // medication routes
 router.get('/medications', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM medications ORDER BY date_created DESC; SELECT count(*) as count FROM medications',
+        new sql.Request().query('SELECT * FROM medications ORDER BY date_created DESC; SELECT count(*) as count FROM medications',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -1017,8 +1009,8 @@ router.post('/medications', isAuthenticated, function(req, res, next) {
             const name = req.body.name;
             const description = req.body.description;
             const cost = req.body.cost;
-            connection.query('INSERT INTO medications (name, description, cost) VALUES ' +
-                '(?, ?, ?)', [name, description, cost], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO medications (name, description, cost) VALUES ('${name}','${description}','${cost}')`,
+               function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1034,8 +1026,8 @@ router.post('/medications', isAuthenticated, function(req, res, next) {
 
 router.get('/medications/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, name, description, cost FROM medications WHERE id = ?', [req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`SELECT id, name, description, cost FROM medications WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1082,8 +1074,7 @@ router.put('/medications/:id', isResource, isAuthenticated, function(req, res, n
         const name = req.body.name;
         const description = req.body.description;
         const cost = req.body.cost;
-        connection.query('UPDATE medications SET name = ?, description = ?, cost = ? WHERE id = ?',
-            [name, description, cost, req.params.id],
+        new sql.Request().query(`UPDATE medications SET name = '${name}', description = '${description}', cost = '${cost}' WHERE id = '${req.params.id}'`,
             function (error, results, fields) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
@@ -1099,7 +1090,7 @@ router.put('/medications/:id', isResource, isAuthenticated, function(req, res, n
 
 router.delete('/medications/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM medications WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM medications WHERE id = '${req.params.id}'`, function (error, results, fields) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -1117,7 +1108,7 @@ router.delete('/medications/:id', isResource, isAuthenticated, function(req, res
 // patient routes
 router.get('/patients', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM patients ORDER BY date_created DESC; SELECT count(*) as count FROM patients',
+        new sql.Request().query('SELECT * FROM patients ORDER BY date_created DESC; SELECT count(*) as count FROM patients',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -1193,8 +1184,8 @@ router.post('/patients', isAuthenticated, function(req, res, next) {
             const phone_number = req.body.phone_number;
             const gender_id = req.body.gender_id;
             const address_id = req.body.address_id;
-            connection.query('INSERT INTO patients (first_name, last_name, age, dob, email, phone_number, gender_id, address_id) VALUES ' +
-                '(?, ?, ?,?, ?, ?,?, ?)', [first_name, last_name, age, dob, email, phone_number, gender_id, address_id], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO patients (first_name, last_name, age, dob, email, phone_number, gender_id, address_id) VALUES 
+                ('${first_name}','${last_name}','${age}','${dob}','${email}','${phone_number}','${gender_id}','${address_id}')`, function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1210,7 +1201,7 @@ router.post('/patients', isAuthenticated, function(req, res, next) {
 
 router.get('/patients/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, first_name, last_name, age, dob, email, phone_number, gender_id, address_id FROM patients WHERE id = ?', [req.params.id],
+        new sql.Request().query(`SELECT id, first_name, last_name, age, dob, email, phone_number, gender_id, address_id FROM patients WHERE id = '${req.params.id}'`,
             function (error, results, fields) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
@@ -1278,10 +1269,9 @@ router.put('/patients/:id', isResource, isAuthenticated, function(req, res, next
         const phone_number = req.body.phone_number;
         const gender_id = req.body.gender_id;
         const address_id = req.body.address_id;
-        connection.query('UPDATE patients SET first_name = ?, last_name = ?, age = ?, dob = ?,' +
-            'email = ?, phone_number = ?, gender_id = ?, address_id = ? WHERE id = ?',
-            [first_name, last_name, age, dob, email, phone_number, gender_id, address_id, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE patients SET first_name = '${first_name}', last_name = '${last_name}', age = '${age}', dob = '${dob}',
+            email = '${email}', phone_number = '${phone_number}', gender_id = '${gender_id}', address_id = '${address_id}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1296,7 +1286,7 @@ router.put('/patients/:id', isResource, isAuthenticated, function(req, res, next
 
 router.delete('/patients/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM patients WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM patients WHERE id = '${req.params.id}'`, function (error, results, fields) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -1314,7 +1304,7 @@ router.delete('/patients/:id', isResource, isAuthenticated, function(req, res, n
 // procedure routes
 router.get('/procedures', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM procedures ORDER BY date_created DESC; SELECT count(*) as count FROM procedures',
+        new sql.Request().query('SELECT * FROM procedures ORDER BY date_created DESC; SELECT count(*) as count FROM procedures',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -1371,8 +1361,8 @@ router.post('/procedures', isAuthenticated, function(req, res, next) {
             const name = req.body.name;
             const description = req.body.description;
             const cost = req.body.cost;
-            connection.query('INSERT INTO procedures (name, description, cost) VALUES ' +
-                '(?, ?, ?)', [name, description, cost], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO procedures (name, description, cost) VALUES ('${name}','${description}','${cost}')`,
+                function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1388,8 +1378,8 @@ router.post('/procedures', isAuthenticated, function(req, res, next) {
 
 router.get('/procedures/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, name, description, cost FROM procedures WHERE id = ?', [req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`SELECT id, name, description, cost FROM procedures WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1436,9 +1426,8 @@ router.put('/procedures/:id', isResource, isAuthenticated, function(req, res, ne
         const name = req.body.name;
         const description = req.body.description;
         const cost = req.body.cost;
-        connection.query('UPDATE procedures SET name = ?, description = ?, cost = ? WHERE id = ?',
-            [name, description, cost, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE procedures SET name = '${name}', description = '${description}', cost = '${cost}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1453,7 +1442,7 @@ router.put('/procedures/:id', isResource, isAuthenticated, function(req, res, ne
 
 router.delete('/procedures/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM procedures WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM procedures WHERE id = '${req.params.id}'`, function (error, results) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -1471,7 +1460,7 @@ router.delete('/procedures/:id', isResource, isAuthenticated, function(req, res,
 // visit routes
 router.get('/visits', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM visits ORDER BY date_created DESC; SELECT count(*) as count FROM visits',
+        new sql.Request().query('SELECT * FROM visits ORDER BY date_created DESC; SELECT count(*) as count FROM visits',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -1524,8 +1513,8 @@ router.post('/visits', isAuthenticated, function(req, res, next) {
             sanitizeBody('doctor_id').trim().escape();
             const patient_id = req.body.patient_id;
             const doctor_id = req.body.doctor_id;
-            connection.query('INSERT INTO visits (patient_id, doctor_id) VALUES ' +
-                '(?, ?)', [patient_id, doctor_id], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO visits (patient_id, doctor_id) VALUES ('${patient_id}','${doctor_id}')`,
+                function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1541,7 +1530,7 @@ router.post('/visits', isAuthenticated, function(req, res, next) {
 
 router.get('/visits/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, patient_id, doctor_id FROM visits WHERE id = ?', [req.params.id],
+        new sql.Request().query(`SELECT id, patient_id, doctor_id FROM visits WHERE id = '${req.params.id}'`,
             function (error, results, fields) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
@@ -1585,9 +1574,8 @@ router.put('/visits/:id', isResource, isAuthenticated, function(req, res, next) 
         sanitizeBody('doctor_id').trim().escape();
         const patient_id = req.body.patient_id;
         const doctor_id = req.body.doctor_id;
-        connection.query('UPDATE visits SET patient_id = ?, doctor_id = ? WHERE id = ?',
-            [patient_id, doctor_id, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE visits SET patient_id = '${patient_id}', doctor_id = '${doctor_id}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1602,7 +1590,7 @@ router.put('/visits/:id', isResource, isAuthenticated, function(req, res, next) 
 
 router.delete('/visits/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM visits WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM visits WHERE id = '${req.params.id}'`, function (error, results, fields) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -1620,7 +1608,7 @@ router.delete('/visits/:id', isResource, isAuthenticated, function(req, res, nex
 // visitmedication routes
 router.get('/visitsmedications', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM visitsmedications ORDER BY date_created DESC; SELECT count(*) as count FROM visitsmedications',
+        new sql.Request().query('SELECT * FROM visitsmedications ORDER BY date_created DESC; SELECT count(*) as count FROM visitsmedications',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -1673,8 +1661,8 @@ router.post('/visitsmedications', isAuthenticated, function(req, res, next) {
             sanitizeBody('medication_id').trim().escape();
             const visit_id = req.body.visit_id;
             const medication_id = req.body.medication_id;
-            connection.query('INSERT INTO visitsmedications (visit_id, medication_id) VALUES ' +
-                '(?, ?)', [visit_id, medication_id], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO visitsmedications (visit_id, medication_id) VALUES ('${visit_id}','${medication_id}')`,
+                function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1690,7 +1678,7 @@ router.post('/visitsmedications', isAuthenticated, function(req, res, next) {
 
 router.get('/visitsmedications/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, visit_id, medication_id FROM visitsmedications WHERE id = ?', [req.params.id],
+        new sql.Request().query(`SELECT id, visit_id, medication_id FROM visitsmedications WHERE id = '${req.params.id}'`,
             function (error, results, fields) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
@@ -1734,9 +1722,8 @@ router.put('/visitsmedications/:id', isResource, isAuthenticated, function(req, 
         sanitizeBody('medication_id').trim().escape();
         const visit_id = req.body.visit_id;
         const medication_id = req.body.medication_id;
-        connection.query('UPDATE visitsmedications SET visit_id = ?, medication_id = ? WHERE id = ?',
-            [visit_id, medication_id, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE visitsmedications SET visit_id = '${visit_id}', medication_id = '${medication_id}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1751,7 +1738,7 @@ router.put('/visitsmedications/:id', isResource, isAuthenticated, function(req, 
 
 router.delete('/visitsmedications/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM visitsmedications WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM visitsmedications WHERE id = '${req.params.id}'`, function (error, results) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)
@@ -1769,7 +1756,7 @@ router.delete('/visitsmedications/:id', isResource, isAuthenticated, function(re
 // visitprocedure routes
 router.get('/visitsprocedures', function(req, res, next) {
     if (req.isAuthenticated()) {
-        connection.query('SELECT * FROM visitsprocedures ORDER BY date_created DESC; SELECT count(*) as count FROM visitsprocedures',
+        new sql.Request().query('SELECT * FROM visitsprocedures ORDER BY date_created DESC; SELECT count(*) as count FROM visitsprocedures',
             function (error, results, fields) {
                 if (error) {
                     throw error;
@@ -1822,8 +1809,8 @@ router.post('/visitsprocedures', isAuthenticated, function(req, res, next) {
             sanitizeBody('procedure_id').trim().escape();
             const visit_id = req.body.visit_id;
             const procedure_id = req.body.procedure_id;
-            connection.query('INSERT INTO visitsprocedures (visit_id, procedure_id) VALUES ' +
-                '(?, ?)', [visit_id, procedure_id], function (error, results, fields) {
+            new sql.Request().query(`INSERT INTO visitsprocedures (visit_id, procedure_id) VALUES ('${visit_id}','${procedure_id}')`,
+                function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1839,8 +1826,8 @@ router.post('/visitsprocedures', isAuthenticated, function(req, res, next) {
 
 router.get('/visitsprocedures/:id/edit', isResource, isAuthenticated, function(req, res) {
     if (req.user.level === 1){
-        connection.query('SELECT id, visit_id, procedure_id FROM visitsprocedures WHERE id = ?', [req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`SELECT id, visit_id, procedure_id FROM visitsprocedures WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1883,9 +1870,8 @@ router.put('/visitsprocedures/:id', isResource, isAuthenticated, function(req, r
         sanitizeBody('procedure_id').trim().escape();
         const visit_id = req.body.visit_id;
         const procedure_id = req.body.procedure_id;
-        connection.query('UPDATE visitsprocedures SET visit_id = ?, procedure_id = ? WHERE id = ?',
-            [visit_id, procedure_id, req.params.id],
-            function (error, results, fields) {
+        new sql.Request().query(`UPDATE visitsprocedures SET visit_id = '${visit_id}', procedure_id = '${procedure_id}' WHERE id = '${req.params.id}'`,
+            function (error, results) {
                 // error will be an Error if one occurred during the query
                 // results will contain the results of the query
                 // fields will contain information about the returned results fields (if any)
@@ -1900,7 +1886,7 @@ router.put('/visitsprocedures/:id', isResource, isAuthenticated, function(req, r
 
 router.delete('/visitsprocedures/:id', isResource, isAuthenticated, function(req, res, next) {
     if (req.user.level === 1){
-        connection.query('DELETE FROM visitsprocedures WHERE id = ?', [req.params.id], function (error, results, fields) {
+        new sql.Request().query(`DELETE FROM visitsprocedures WHERE id = '${req.params.id}'`, function (error, results, fields) {
             // error will be an Error if one occurred during the query
             // results will contain the results of the query
             // fields will contain information about the returned results fields (if any)

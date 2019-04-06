@@ -82,7 +82,7 @@
 
     </div>
     <div class="col-md-9 ofx-s">
-        <h5><%= results[1][0].count %> Rows</h5>
+        <h5><%= results.recordsets[1][0].count %> Rows</h5>
         <table class="table">
             <!--<thead>-->
             <!--<tr>-->
@@ -112,25 +112,25 @@
             </tr>
             </thead>
             <tbody>
-            <% for(var i=0; i < results[0].length; i++) { %>
+            <% for(var i=0; i < results.recordsets[0].length; i++) { %>
                 <tr>
-                    <td><%= results[0][i].id %></td>
-                    <td><%= results[0][i].first_name %></td>
-                    <td><%= results[0][i].last_name %></td>
-                    <td><%= results[0][i].age %></td>
-                    <td><%= results[0][i].dob %></td>
-                    <td><%= results[0][i].email %></td>
-                    <td><%= results[0][i].phone_number %></td>
-                    <td><%= results[0][i].gender_id %></td>
-                    <td><%= results[0][i].address_id %></td>
-                    <td><%= results[0][i].date_created %></td>
-                    <td><%= results[0][i].date_edited %></td>
+                    <td><%= results.recordsets[0][i].id %></td>
+                    <td><%= results.recordsets[0][i].first_name %></td>
+                    <td><%= results.recordsets[0][i].last_name %></td>
+                    <td><%= results.recordsets[0][i].age %></td>
+                    <td><%= results.recordsets[0][i].dob %></td>
+                    <td><%= results.recordsets[0][i].email %></td>
+                    <td><%= results.recordsets[0][i].phone_number %></td>
+                    <td><%= results.recordsets[0][i].gender_id %></td>
+                    <td><%= results.recordsets[0][i].address_id %></td>
+                    <td><%= results.recordsets[0][i].date_created %></td>
+                    <td><%= results.recordsets[0][i].date_edited %></td>
                     <% if (req.user.level == 1) { %>
                         <td>
-                            <a href="/doctors/<%= results[0][i].id %>/edit" class="btn btn-outline-secondary">Edit</a>
+                            <a href="/doctors/<%= results.recordsets[0][i].id %>/edit" class="btn btn-outline-secondary">Edit</a>
                         </td>
                         <td>
-                            <form action="/doctors/<%= results[0][i].id %>?_method=DELETE" method="post">
+                            <form action="/doctors/<%= results.recordsets[0][i].id %>?_method=DELETE" method="post">
                                 <button type="submit" class="btn btn-outline-secondary">Delete</button>
                             </form>
                         </td>

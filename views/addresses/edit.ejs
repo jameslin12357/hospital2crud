@@ -4,7 +4,7 @@
     <div class="row">
         <div class="col-lg-6 offset-lg-3">
             <h3 class="login-heading mb-4 text-center">Edit address</h3>
-            <form action="/addresses/<%= results[0].id %>?_method=PUT" method="post">
+            <form action="/addresses/<%= results.recordsets[0][0].id %>?_method=PUT" method="post">
                 <% if (errors.length > 0) { %>
                 <% for(var i = 0; i < errors.length; i++) { %>
                 <div class="alert alert-danger mb-15" role="alert">
@@ -13,27 +13,27 @@
                 <% } %>
                 <% } %>
                 <div class="form-label-group">
-                    <input type="text" id="inputUsername" class="form-control" placeholder="Building number" name="building_number" value="<%if (inputs.length > 0) { %><%= inputs[0].building_number %><% }else{ %><%= results[0].building_number %><% } %>" required autofocus>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="Building number" name="building_number" value="<%if (inputs.length > 0) { %><%= inputs[0].building_number %><% }else{ %><%= results.recordsets[0][0].building_number %><% } %>" required autofocus>
                     <label for="inputUsername">Building number</label>
                 </div>
                 <div class="form-label-group">
-                    <input type="text" id="inputUsername" class="form-control" placeholder="Street" name="street" value="<%if (inputs.length > 0) { %><%= inputs[0].street %><% }else{ %><%= results[0].street %><% } %>" required autofocus>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="Street" name="street" value="<%if (inputs.length > 0) { %><%= inputs[0].street %><% }else{ %><%= results.recordsets[0][0].street %><% } %>" required autofocus>
                     <label for="inputUsername">Street</label>
                 </div>
                 <div class="form-label-group">
-                    <input type="text" id="inputUsername" class="form-control" placeholder="City" name="city" value="<%if (inputs.length > 0) { %><%= inputs[0].city %><% }else{ %><%= results[0].city %><% } %>" required autofocus>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="City" name="city" value="<%if (inputs.length > 0) { %><%= inputs[0].city %><% }else{ %><%= results.recordsets[0][0].city %><% } %>" required autofocus>
                     <label for="inputUsername">City</label>
                 </div>
                 <div class="form-label-group">
-                    <input type="text" id="inputUsername" class="form-control" placeholder="State" name="state" value="<%if (inputs.length > 0) { %><%= inputs[0].state %><% }else{ %><%= results[0].state %><% } %>" required autofocus>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="State" name="state" value="<%if (inputs.length > 0) { %><%= inputs[0].state %><% }else{ %><%= results.recordsets[0][0].state %><% } %>" required autofocus>
                     <label for="inputUsername">State</label>
                 </div>
                 <div class="form-label-group">
-                    <input type="text" id="inputUsername" class="form-control" placeholder="Country" name="country" value="<%if (inputs.length > 0) { %><%= inputs[0].country %><% }else{ %><%= results[0].country %><% } %>" required autofocus>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="Country" name="country" value="<%if (inputs.length > 0) { %><%= inputs[0].country %><% }else{ %><%= results.recordsets[0][0].country %><% } %>" required autofocus>
                     <label for="inputUsername">Country</label>
                 </div>
                 <div class="form-label-group">
-                    <input type="text" id="inputUsername" class="form-control" placeholder="Zip" name="zip" value="<%if (inputs.length > 0) { %><%= inputs[0].zip %><% }else{ %><%= results[0].zip %><% } %>" required autofocus>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="Zip" name="zip" value="<%if (inputs.length > 0) { %><%= inputs[0].zip %><% }else{ %><%= results.recordsets[0][0].zip %><% } %>" required autofocus>
                     <label for="inputUsername">Zip</label>
                 </div>
 
