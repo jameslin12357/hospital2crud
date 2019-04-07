@@ -31,6 +31,16 @@ sql.connect(config, function (err) {
     if (err) console.log(err);
 });
 
+
+bcrypt.hash('Sample123$', saltRounds, function(err, hash) {
+    // Store hash in your password DB.
+    if (err) {
+        throw error;
+    }
+    console.log(hash);
+});
+
+
 // var connection = mysql.createConnection({
 //     host     : process.env.DB_HOSTNAME,
 //     user     : process.env.DB_USERNAME,
